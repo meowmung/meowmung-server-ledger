@@ -24,7 +24,7 @@ import {Item} from "./ledger/entities/item.entity";
                 username: configService.get('DB_USER'),
                 password: configService.get('DB_PASSWORD'),
                 entities: [Ledger,Item],
-                synchronize: true, // 변경 필요~~~~~~~~~
+                synchronize: false, // 변경 필요~~~~~~~~~
                 logging: true,
                 timezone: 'local',
             }),
