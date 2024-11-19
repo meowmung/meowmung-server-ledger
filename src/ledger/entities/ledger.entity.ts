@@ -6,6 +6,9 @@ export class Ledger {
     @PrimaryGeneratedColumn()
     id: number;
 
+    // @Column()
+    // email: string;
+
     @Column({type: 'date'})
     date: Date
 

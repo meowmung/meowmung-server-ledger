@@ -1,14 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { CreateLedgerDto } from './dto/create-ledger.dto';
 import { UpdateLedgerDto } from './dto/update-ledger.dto';
+import {Ledger} from "./entities/ledger.entity";
+import {InjectRepository} from "@nestjs/typeorm";
+import {Repository} from "typeorm";
 
 @Injectable()
 export class LedgerService {
+  constructor(
+      @InjectRepository(Ledger)
+      private ledgerRepository: Repository<Ledger>,
+      // @InjectRepository(Ledger)
+      // private usersRepository: Repository<Ledger>
+  ) {}
+
   create(createLedgerDto: CreateLedgerDto) {
     return 'This action adds a new ledger';
   }
 
-  findAll(nickname: string) {
+  findAll(email: string) {
     return `This action returns all ledger`;
   }
 

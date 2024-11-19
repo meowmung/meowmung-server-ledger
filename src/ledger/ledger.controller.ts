@@ -13,8 +13,8 @@ export class LedgerController {
   }
 
   @Get()
-  findAll(@Headers('X-Authorization-nickname') nickname: string) {
-    return this.ledgerService.findAll(nickname);
+  findAll(@Headers('X-Authorization-email') email: string) {
+    return this.ledgerService.findAll(email);
   }
 
   @Get(':id')
