@@ -7,7 +7,6 @@ import {DataSource} from "typeorm";
 import {ConfigModule, ConfigService} from '@nestjs/config';
 import {Ledger} from "./ledger/entities/ledger.entity";
 import {Item} from "./ledger/entities/item.entity";
-import * as path from "node:path";
 
 @Module({
     imports: [
@@ -24,10 +23,8 @@ import * as path from "node:path";
                 database: configService.get('DB_NAME'),
                 username: configService.get('DB_USER'),
                 password: configService.get('DB_PASSWORD'),
-                entities: [
-                    path.join(__dirname, 'src/entities/**/*.entity.{js, ts}'),
-                ],
-                synchronize: false,
+                entities: [Ledger,Item],
+                synchronize: false, // 변경 필요~~~~~~~~~
                 logging: true,
                 timezone: 'local',
             }),
