@@ -7,6 +7,7 @@ import {DataSource} from "typeorm";
 import {ConfigModule, ConfigService} from '@nestjs/config';
 import {Ledger} from "./ledger/entities/ledger.entity";
 import {Item} from "./ledger/entities/item.entity";
+import {GrpcModule} from "./ledger/grpc/grpc.module";
 
 @Module({
     imports: [
@@ -30,6 +31,7 @@ import {Item} from "./ledger/entities/item.entity";
             }),
         }),
         LedgerModule,
+        GrpcModule,
         ConfigModule.forRoot()
     ],
     // imports: [LedgerModule],
