@@ -12,17 +12,14 @@ import {
     UseInterceptors, Logger
 } from '@nestjs/common';
 import {LedgerService} from './ledger.service';
-import {CreateLedgerDto} from './dto/create-ledger.dto';
-import {UpdateLedgerDto} from './dto/update-ledger.dto';
 import {FileInterceptor} from "@nestjs/platform-express";
-import {FileUploadDto} from "./dto/upload-ledger.dto";
-import * as fs from "node:fs";
-import {GrpcService} from "./grpc/grpc.service";
+import {GrpcController} from "./grpc/grpc.controller";
+import {ParamImage} from './grpc/interface/grpc-param.interface';
 
 @Controller('ledger')
 export class LedgerController {
     constructor(private readonly ledgerService: LedgerService,
-    private readonly grpcService: GrpcService) {
+                private readonly grpcController: GrpcController) {
     }
 
     private readonly logger = new Logger(LedgerController.name);
@@ -37,12 +34,22 @@ export class LedgerController {
     async uploadFile(@UploadedFile() file: Express.Multer.File) {
         try {
             this.logger.log(`Received file: ${file.originalname}`);
-            const response = await this.grpcService.uploadFileToGrpc(file);
+
+            // gRPC로 파일 데이터 전송
+            const param: ParamImage = {
+                file: {
+                    ...file,
+                    buffer: file.buffer, // 파일 바이너리를 포함
+                } as Express.Multer.File,
+            };
+
+            const response = this.grpcController.processFile(param);
             this.logger.log(`gRPC Server Response: ${JSON.stringify(response)}`);
         } catch (error) {
             this.logger.error(`Error during file upload: ${error.message}`);
         }
     }
+
 
     @Get(':year/:month')
     findAll(@Headers('X-Authorization-email') email: string,
