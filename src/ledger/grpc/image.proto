@@ -3,10 +3,10 @@ syntax = "proto3";
 package hero;
 
 service HeroesService {
-    rpc FindOne (Param) returns (Result);
+    rpc FindOne (ParamImage) returns (Result);
 }
 
-message Param {
+message ParamImage {
     int32 id = 1;
 }
 
