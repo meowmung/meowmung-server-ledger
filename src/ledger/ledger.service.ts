@@ -88,12 +88,13 @@ export class LedgerService {
             email,
             location: result.location,
             date: result.date,
+            message: "",
             items: result.items.map((item) =>
                 this.itemRepository.create({
                     name: item.name,
                     price: item.price,
                     category: item.category,
-                    quantity: item.quantity
+                    quantity: item.count
                 }),
             ),
         });
