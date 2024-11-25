@@ -1,10 +1,9 @@
 import {NestFactory} from '@nestjs/core';
 import {AppModule} from './app.module';
-import client from "./ledger/configs/eureka.module";
 import * as path from "node:path";
 
 async function bootstrap() {
-    client.start();
+    // client.start();
     const app = await NestFactory.create(AppModule);
 
     // app.connectMicroservice({

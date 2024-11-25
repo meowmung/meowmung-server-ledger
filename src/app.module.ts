@@ -7,7 +7,7 @@ import {DataSource} from "typeorm";
 import {ConfigModule, ConfigService} from '@nestjs/config';
 import {Ledger} from "./ledger/entities/ledger.entity";
 import {Item} from "./ledger/entities/item.entity";
-// import {GrpcModule} from "./ledger/grpc/grpc.module";
+
 
 @Module({
     imports: [
@@ -25,7 +25,7 @@ import {Item} from "./ledger/entities/item.entity";
                 username: configService.get('DB_USER'),
                 password: configService.get('DB_PASSWORD'),
                 entities: [Ledger,Item],
-                synchronize: false, // 변경 필요~~~~~~~~~
+                synchronize: false, // 변경 필요 false <- 배포용
                 logging: true,
                 timezone: 'local',
             }),

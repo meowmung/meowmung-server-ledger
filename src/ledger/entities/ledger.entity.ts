@@ -7,10 +7,16 @@ export class Ledger {
     id: number;
 
     @Column()
-    email: string;
+    email:string;
+
+    @Column()
+    location: string;
 
     @Column({type: 'date'})
-    date: Date
+    date: Date;
+
+    @Column()
+    message: string;
 
     @OneToMany(type => Item, item => item.ledger)
     items: Item[];

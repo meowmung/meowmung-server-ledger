@@ -13,6 +13,9 @@ export class Item {
     price: number;
 
     @Column()
+    quantity: number;
+
+    @Column()
     category: string;
 
     @ManyToOne(type => Ledger, ledger=> ledger.items)

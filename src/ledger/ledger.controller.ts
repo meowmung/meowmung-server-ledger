@@ -1,55 +1,39 @@
 import {
+    Body,
     Controller,
     Get,
-    Post,
-    Body,
-    Patch,
-    Param,
-    Delete,
     Headers,
-    Query,
+    Logger,
+    Param, Patch,
+    Post, Put,
     UploadedFile,
-    UseInterceptors, Logger
+    UploadedFiles,
+    UseInterceptors
 } from '@nestjs/common';
 import {LedgerService} from './ledger.service';
-import {FileInterceptor} from "@nestjs/platform-express";
-import {GrpcController} from "./grpc/grpc.controller";
-import {ParamImage} from './grpc/interface/grpc-param.interface';
+import {FileInterceptor, FilesInterceptor} from "@nestjs/platform-express";
+import {UpdateLedgerDto} from "./dto/update-ledger.dto";
 
 @Controller('ledger')
 export class LedgerController {
-    constructor(private readonly ledgerService: LedgerService,
-                private readonly grpcController: GrpcController) {
+    constructor(private readonly ledgerService: LedgerService) {
     }
 
     private readonly logger = new Logger(LedgerController.name);
 
-    /**
-     * form-data or multipart/form-data
-     * key = file (file), value = 이미지
-     * @param file
-     */
     @Post('upload')
-    @UseInterceptors(FileInterceptor('file'))
-    async uploadFile(@UploadedFile() file: Express.Multer.File) {
-        try {
-            this.logger.log(`Received file: ${file.originalname}`);
-
-            // gRPC로 파일 데이터 전송
-            const param: ParamImage = {
-                file: {
-                    ...file,
-                    buffer: file.buffer, // 파일 바이너리를 포함
-                } as Express.Multer.File,
-            };
-
-            const response = this.grpcController.processFile(param);
-            this.logger.log(`gRPC Server Response: ${JSON.stringify(response)}`);
-        } catch (error) {
-            this.logger.error(`Error during file upload: ${error.message}`);
-        }
+    @UseInterceptors(FilesInterceptor('files', 10)) // 최대 10개의 파일 허용
+    async uploadFiles(
+        @Headers('X-Authorization-email') email: string,
+        @UploadedFiles() files: Express.Multer.File[]) {
+        const result = await this.ledgerService.sendImages(files);
+        return this.ledgerService.saveResult(email, result);
     }
-
+    @Post('upload/update')
+    async update(@Headers('X-Authorization-email') email: string,
+                 @Body() updateLedgerDto: UpdateLedgerDto){
+        await this.ledgerService.update(updateLedgerDto);
+    }
 
     @Get(':year/:month')
     findAll(@Headers('X-Authorization-email') email: string,
@@ -65,6 +49,12 @@ export class LedgerController {
             @Param('day') day: number) {
         return this.ledgerService.findOne(email, year, month, day);
     }
+
+    // @Put(":year/:month/:day")
+    // async updateLedger(@Headers('X-Authorization-email') email: string,
+    //                    @Body() updateLedgerDto: UpdateLedgerDto) {
+    //     return this.ledgerService.updateLedger(email, updateLedgerDto);
+    // }
 
     @Get('category')
     findByCategory(@Headers('X-Authorization-email') email: string) {
