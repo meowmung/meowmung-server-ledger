@@ -1,36 +1,38 @@
 import {
+    Body,
     Controller,
     Get,
-    Post,
-    Body,
-    Patch,
-    Param,
-    Delete,
     Headers,
-    Query,
+    Logger,
+    Param, Patch,
+    Post, Put,
     UploadedFile,
+    UploadedFiles,
     UseInterceptors
 } from '@nestjs/common';
 import {LedgerService} from './ledger.service';
-import {CreateLedgerDto} from './dto/create-ledger.dto';
-import {UpdateLedgerDto} from './dto/update-ledger.dto';
-import {FileInterceptor} from "@nestjs/platform-express";
-import {FileUploadDto} from "./dto/upload-ledger.dto";
+import {FileInterceptor, FilesInterceptor} from "@nestjs/platform-express";
+import {UpdateLedgerDto} from "./dto/update-ledger.dto";
 
 @Controller('ledger')
 export class LedgerController {
     constructor(private readonly ledgerService: LedgerService) {
     }
 
-    /**
-     * form-data or multipart/form-data
-     * key = file (file), value = 이미지
-     * @param file
-     */
+    private readonly logger = new Logger(LedgerController.name);
+
     @Post('upload')
-    @UseInterceptors(FileInterceptor('file'))
-    uploadFile(@UploadedFile() file: Express.Multer.File) {
-        console.log(file);
+    @UseInterceptors(FilesInterceptor('files', 10)) // 최대 10개의 파일 허용
+    async uploadFiles(
+        @Headers('X-Authorization-email') email: string,
+        @UploadedFiles() files: Express.Multer.File[]) {
+        const result = await this.ledgerService.sendImages(files);
+        return this.ledgerService.saveResult(email, result);
+    }
+    @Post('upload/update')
+    async update(@Headers('X-Authorization-email') email: string,
+                 @Body() updateLedgerDto: UpdateLedgerDto){
+        await this.ledgerService.update(updateLedgerDto);
     }
 
     @Get(':year/:month')
@@ -47,6 +49,12 @@ export class LedgerController {
             @Param('day') day: number) {
         return this.ledgerService.findOne(email, year, month, day);
     }
+
+    // @Put(":year/:month/:day")
+    // async updateLedger(@Headers('X-Authorization-email') email: string,
+    //                    @Body() updateLedgerDto: UpdateLedgerDto) {
+    //     return this.ledgerService.updateLedger(email, updateLedgerDto);
+    // }
 
     @Get('category')
     findByCategory(@Headers('X-Authorization-email') email: string) {
