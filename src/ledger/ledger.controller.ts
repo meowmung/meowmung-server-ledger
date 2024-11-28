@@ -11,8 +11,9 @@ import {
     UseInterceptors
 } from '@nestjs/common';
 import {LedgerService} from './ledger.service';
-import {FileInterceptor, FilesInterceptor} from "@nestjs/platform-express";
+import {FilesInterceptor} from "@nestjs/platform-express";
 import {UpdateLedgerDto} from "./dto/update-ledger.dto";
+import {UploadLedgerDto} from "./dto/upload-ledger.dto";
 
 @Controller('ledger')
 export class LedgerController {
@@ -24,40 +25,40 @@ export class LedgerController {
     @Post('upload')
     @UseInterceptors(FilesInterceptor('files', 10)) // 최대 10개의 파일 허용
     async uploadFiles(
-        @Headers('X-Authorization-email') email: string,
+        @Headers('X-Authorization-memberId') memberId: number,
         @UploadedFiles() files: Express.Multer.File[]) {
+        console.log(files);
         const result = await this.ledgerService.sendImages(files);
-        return this.ledgerService.saveResult(email, result);
+        return this.ledgerService.saveResult(memberId, result);
     }
     @Post('upload/update')
-    async update(@Headers('X-Authorization-email') email: string,
+    async update(@Headers('X-Authorization-memberId') memberId: number,
                  @Body() updateLedgerDto: UpdateLedgerDto){
-        await this.ledgerService.update(updateLedgerDto);
+        await this.ledgerService.update(updateLedgerDto, memberId);
+    }
+    @Post('upload/enroll')
+    async enroll(@Headers('X-Authorization-memberId') memberId: number,@Body() uploadLedgerDto: UploadLedgerDto){
+        await this.ledgerService.enroll(uploadLedgerDto, memberId);
     }
 
+
     @Get(':year/:month')
-    findAll(@Headers('X-Authorization-email') email: string,
+    findAll(@Headers('X-Authorization-memberId') memberId: number,
             @Param('year') year: number,
             @Param('month') month: number) {
-        return this.ledgerService.findAll(email, year, month);
+        return this.ledgerService.findAll(memberId, year, month);
     }
 
     @Get(':year/:month/:day')
-    findOne(@Headers('X-Authorization-email') email: string,
+    findOne(@Headers('X-Authorization-memberId') memberId: number,
             @Param('year') year: number,
             @Param('month') month: number,
             @Param('day') day: number) {
-        return this.ledgerService.findOne(email, year, month, day);
+        return this.ledgerService.findOne(memberId, year, month, day);
     }
 
-    // @Put(":year/:month/:day")
-    // async updateLedger(@Headers('X-Authorization-email') email: string,
-    //                    @Body() updateLedgerDto: UpdateLedgerDto) {
-    //     return this.ledgerService.updateLedger(email, updateLedgerDto);
-    // }
-
     @Get('category')
-    findByCategory(@Headers('X-Authorization-email') email: string) {
-        return this.ledgerService.findByCategory(email);
+    findByCategory(@Headers('X-Authorization-memberId') memberId: number) {
+        return this.ledgerService.findByCategory(memberId);
     }
 }

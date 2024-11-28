@@ -7,6 +7,7 @@ import {HttpService} from "@nestjs/axios";
 import axios from "axios";
 import FormData from 'form-data';
 import {UpdateLedgerDto} from "./dto/update-ledger.dto";
+import {UploadLedgerDto} from "./dto/upload-ledger.dto";
 
 @Injectable()
 export class LedgerService {
@@ -19,7 +20,7 @@ export class LedgerService {
     ) {
     }
 
-    async findAll(email: string, year: number, month: number): Promise<Ledger[]> {
+    async findAll(memberId: number, year: number, month: number): Promise<Ledger[]> {
         // const currentYear: number = new Date().getFullYear();
         // const currentMonth: number = new Date().getMonth() + 1;
         return this.ledgerRepository
@@ -27,26 +28,26 @@ export class LedgerService {
             .leftJoinAndSelect('ledger.items', 'item')
             .where('YEAR(ledger.date) = :year', {year: year})
             .andWhere('MONTH(ledger.date) = :month', {month: month})
-            .andWhere('ledger.email = :email', {email})
+            .andWhere('ledger.memberId = :memberId', {memberId})
             .andWhere('item.id IS NOT NULL')
             .orderBy('ledger.date', 'ASC') // 날짜순으로 정렬
             .getMany();
     }
 
-    async findOne(email: string, year: number, month: number, day: number): Promise<Ledger[]> {
+    async findOne(memberId: number, year: number, month: number, day: number): Promise<Ledger[]> {
         return this.ledgerRepository
             .createQueryBuilder('ledger')
             .leftJoinAndSelect('ledger.items', 'item')
             .where('YEAR(ledger.date) = :year', {year: year})
             .andWhere('MONTH(ledger.date) = :month', {month: month})
             .andWhere('DAY(ledger.date) = :day', {day: day})
-            .andWhere('ledger.email = :email', {email})
+            .andWhere('ledger.memberId = :memberId', {memberId})
             .andWhere('item.id IS NOT NULL')
             .orderBy('ledger.date', 'ASC') // 날짜순으로 정렬
             .getMany();
     }
 
-    async findByCategory(email: string): Promise<Ledger[]> {
+    async findByCategory(memberId: number): Promise<Ledger[]> {
         const currentYear: number = new Date().getFullYear();
         const currentMonth: number = new Date().getMonth() + 1;
 
@@ -55,7 +56,7 @@ export class LedgerService {
             .innerJoin('ledger.items', 'item')
             .where('YEAR(ledger.date) = :year', {year: currentYear})
             .andWhere('MONTH(ledger.date) = :month', {month: currentMonth})
-            .andWhere('ledger.email = :email', {email})
+            .andWhere('ledger.memberId = :memberId', {memberId})
             .select('item.category', 'category')
             .addSelect('SUM(item.price)', 'totalAmount')
             .groupBy('item.category')
@@ -83,9 +84,9 @@ export class LedgerService {
         }
     }
 
-    async saveResult(email: string, result: any): Promise<Ledger> {
+    async saveResult(memberId: number, result: any): Promise<Ledger> {
         const ledger = this.ledgerRepository.create({
-            email,
+            memberId: memberId,
             location: result.location,
             date: result.date,
             message: "",
@@ -138,12 +139,42 @@ export class LedgerService {
         return this.ledgerRepository.save(ledger); // Ledger 저장
     }
 
-    async update(updateLedgerDto: UpdateLedgerDto) {
+    async update(updateLedgerDto: UpdateLedgerDto, memberId : number) {
         const { id, ...newInput } = updateLedgerDto;
         const result = await this.ledgerRepository.update(
-            {id: id},
-            {...newInput}
+            { id, memberId }, // 조건
+            { ...newInput }   // 업데이트 내용
         )
-        return !!result.affected; //행이 영향을 받았는지 확인
+        return result.affected > 0; //행이 영향을 받았는지 확인
+    }
+
+    async enroll(uploadLedgerDto: UploadLedgerDto, memberId: number): Promise<Ledger> {
+        const { location, message, date, items } = uploadLedgerDto;
+
+        // Ledger 객체 생성
+        const ledger = this.ledgerRepository.create({
+            memberId,
+            location,
+            message,
+            date: new Date(date),
+        });
+
+        // Ledger 저장
+        const savedLedger = await this.ledgerRepository.save(ledger);
+
+        // Item 객체 생성 및 Ledger와 연관 설정
+        if (items && items.length > 0) {
+            const itemsToSave = items.map(item => {
+                return this.itemRepository.create({
+                    ...item,
+                    ledger: savedLedger, // Ledger와 연관
+                });
+            });
+
+            // Item 저장
+            await this.itemRepository.save(itemsToSave);
+        }
+
+        return savedLedger;
     }
 }
