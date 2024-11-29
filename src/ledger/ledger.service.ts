@@ -65,24 +65,28 @@ export class LedgerService {
 
     async sendImages(files) {
         const form = new FormData();
-        // files.forEach(()=>)
         files.forEach((file) => {
-            form.append('files', file.buffer, file.originalname); // 'files' 키로 파일 추가
-        });
-        try {
-            const response = await axios.post('http://localhost:8000/ledger_receipt', form, {
-                headers: {
-                    ...form.getHeaders(),
-                    // "Content-Type": 'multipart/form-data'
-                },
+            form.append('files', file.buffer, {
+                filename: file.originalname,
+                contentType: file.mimetype,
             });
-            // this.logger.log('Response from FastAPI:', response.data);
+        });
+
+        console.log('Sending files:', form);
+
+        try {
+            const response = await axios.post('http://localhost:8085/ledger_receipt', form, {
+                headers: form.getHeaders(),
+            });
+            console.log('Response from FastAPI:', response.data);
             return response.data;
         } catch (error) {
-            // this.logger.error(`Error sending images: ${error.response?.data || error.message}`);
+            console.error('Error sending images:', error.response?.data || error.message);
+            console.error('Error details:', error.response || error);
             throw new Error('Failed to process images');
         }
     }
+
 
     async saveResult(memberId: number, result: any): Promise<Ledger> {
         const ledger = this.ledgerRepository.create({
