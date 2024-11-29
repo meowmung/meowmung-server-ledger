@@ -7,7 +7,7 @@ export class Ledger {
     id: number;
 
     @Column()
-    email:string;
+    memberId: number;
 
     @Column()
     location: string;
