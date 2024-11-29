@@ -10,10 +10,11 @@ import {MulterModule} from "@nestjs/platform-express";
 
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Ledger, Item]), HttpModule
-        // MulterModule.register({
-        //     storage: multer.memoryStorage(), // memoryStorage 설정
-        // }),
+    imports: [TypeOrmModule.forFeature([Ledger, Item]), HttpModule,
+
+        MulterModule.register({
+            storage: multer.memoryStorage(), // memoryStorage 설정
+        }),
         ],
     controllers: [LedgerController],
     providers: [LedgerService],
