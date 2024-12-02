@@ -94,17 +94,28 @@ export class LedgerService {
             location: result.location,
             date: result.date,
             message: "",
-            items: result.items.map((item) =>
-                this.itemRepository.create({
-                    name: item.name,
-                    price: item.price,
-                    category: item.category,
-                    quantity: item.count
-                }),
-            ),
         });
-        // 데이터베이스에 저장 (연관된 Item도 자동 저장됨)
-        return await this.ledgerRepository.save(ledger);
+
+        // Ledger 저장
+        const savedLedger = await this.ledgerRepository.save(ledger);
+
+        // Items 생성 및 Ledger와 연관 설정
+        const items = result.items.map((item) =>
+            this.itemRepository.create({
+                name: item.name,
+                price: item.price,
+                category: item.category,
+                quantity: item.count,
+                ledger: savedLedger, // Ledger와 관계 설정
+            }),
+        );
+
+        // Items 저장
+        await this.itemRepository.save(items);
+
+        // 저장된 Ledger에 Items를 추가하여 반환
+        savedLedger.items = items;
+        return savedLedger;
     }
 
     async updateLedger(email: string, updateLedgerDto: UpdateLedgerDto) {
@@ -143,17 +154,50 @@ export class LedgerService {
         return this.ledgerRepository.save(ledger); // Ledger 저장
     }
 
-    async update(updateLedgerDto: UpdateLedgerDto, memberId : number) {
-        const { id, ...newInput } = updateLedgerDto;
-        const result = await this.ledgerRepository.update(
-            { id, memberId }, // 조건
-            { ...newInput }   // 업데이트 내용
-        )
-        return result.affected > 0; //행이 영향을 받았는지 확인
+    async update(updateLedgerDto: UpdateLedgerDto, memberId: number) {
+        const { id, location, message, date, items } = updateLedgerDto;
+
+        // 1. Ledger 가져오기
+        const ledger = await this.ledgerRepository.findOne({
+            where: { id, memberId },
+            relations: ['items'], // 기존 Items와 관계 로드
+        });
+
+        if (!ledger) {
+            throw new Error(`Ledger with ID ${id} not found for Member ID ${memberId}`);
+        }
+
+        // 2. Ledger 기본 정보 업데이트
+        ledger.location = location;
+        ledger.message = message;
+        ledger.date = new Date(date);
+
+        // 3. 기존 Items 삭제
+        if (ledger.items.length > 0) {
+            await this.itemRepository.remove(ledger.items);
+        }
+
+        // 4. 새로운 Items 생성 및 Ledger와 연관 설정
+        const newItems = items.map((item) =>
+            this.itemRepository.create({
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                category: item.category,
+                ledger, // Ledger와 관계 설정
+            }),
+        );
+
+        // 5. Items 저장
+        await this.itemRepository.save(newItems);
+
+        // 6. Ledger 저장
+        return await this.ledgerRepository.save(ledger);
     }
 
+
     async enroll(uploadLedgerDto: UploadLedgerDto, memberId: number): Promise<Ledger> {
-        const { location, message, date, items } = uploadLedgerDto;
+        const {location, message, date, items} = uploadLedgerDto;
 
         // Ledger 객체 생성
         const ledger = this.ledgerRepository.create({
@@ -180,5 +224,15 @@ export class LedgerService {
         }
 
         return savedLedger;
+    }
+
+    async findLedgerById(memberId: number, ledgerId: number): Promise<Ledger> {
+        return this.ledgerRepository.findOne({
+            where: {
+                id: ledgerId,
+                memberId: memberId,
+            },
+            relations: ['items'], // Ledger와 연관된 Items도 가져오기
+        });
     }
 }
