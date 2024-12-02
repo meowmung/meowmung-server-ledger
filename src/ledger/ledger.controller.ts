@@ -3,7 +3,7 @@ import {
     Controller,
     Get,
     Headers,
-    Logger,
+    Logger, NotFoundException,
     Param, Patch,
     Post, Put,
     UploadedFile,
@@ -31,13 +31,27 @@ export class LedgerController {
         const result = await this.ledgerService.sendImages(files);
         return this.ledgerService.saveResult(memberId, result);
     }
+
     @Post('upload/update')
     async update(@Headers('X-Authorization-memberId') memberId: number,
-                 @Body() updateLedgerDto: UpdateLedgerDto){
+                 @Body() updateLedgerDto: UpdateLedgerDto) {
         await this.ledgerService.update(updateLedgerDto, memberId);
     }
+
+    @Get(':id')
+    async oneImage(@Headers('X-Authorization-memberId') memberId: number,
+                   @Param('id') id: number) {
+        const ledger = await this.ledgerService.findLedgerById(memberId, id);
+
+        if (!ledger) {
+            throw new NotFoundException(`Ledger with ID ${id} not found for Member ID ${memberId}`);
+        }
+
+        return ledger;
+    }
+
     @Post('upload/enroll')
-    async enroll(@Headers('X-Authorization-memberId') memberId: number,@Body() uploadLedgerDto: UploadLedgerDto){
+    async enroll(@Headers('X-Authorization-memberId') memberId: number, @Body() uploadLedgerDto: UploadLedgerDto) {
         await this.ledgerService.enroll(uploadLedgerDto, memberId);
     }
 
