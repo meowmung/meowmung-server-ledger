@@ -6,5 +6,4 @@ import {Item} from "../entities/item.entity";
         message : string;
         date : string;
         items : Item[];
-
     }

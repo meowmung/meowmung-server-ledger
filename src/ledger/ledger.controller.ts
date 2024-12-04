@@ -71,8 +71,10 @@ export class LedgerController {
         return this.ledgerService.findOne(memberId, year, month, day);
     }
 
-    @Get('category')
-    findByCategory(@Headers('X-Authorization-memberId') memberId: number) {
-        return this.ledgerService.findByCategory(memberId);
+    @Get('/analyze/category/:year/:month')
+    findByCategory(@Headers('X-Authorization-memberId') memberId: number,
+                   @Param('year') year: number,
+                   @Param('month') month: number) {
+        return this.ledgerService.findByCategory(memberId, year, month);
     }
 }
