@@ -7,11 +7,13 @@ import {Item} from "./entities/item.entity";
 import {HttpModule} from '@nestjs/axios';
 import multer from "multer";
 import {MulterModule} from "@nestjs/platform-express";
+import { S3Module } from './s3/s3.module';
 
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Ledger, Item]), HttpModule,
-
+    imports: [TypeOrmModule.forFeature([Ledger, Item]),
+        HttpModule,
+        S3Module,
         MulterModule.register({
             storage: multer.memoryStorage(), // memoryStorage 설정
         }),
