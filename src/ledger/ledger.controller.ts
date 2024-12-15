@@ -108,15 +108,16 @@ export class LedgerController {
   ) {
     return this.ledgerService.findByCategory(memberId, year, month);
   }
-
   @Delete(':id/:itemId')
   async delete(
     @Headers('X-Authorization-memberId') memberId: number,
     @Param('id') id: number,
     @Param('itemId') itemId: number,
   ) {
+    console.log(`memberId: ${memberId}, id: ${id}, itemId: ${itemId}`);
     return await this.ledgerService.deleteItem(memberId, id, itemId);
   }
+
 
   @Delete(':id')
   async deleteLedger(

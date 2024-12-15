@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Ledger } from './entities/ledger.entity';
-import { InjectRepository } from '@nestjs/typeorm';
+import { getDataSourceToken, InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Item } from './entities/item.entity';
 import { HttpService } from '@nestjs/axios';
@@ -323,14 +323,16 @@ export class LedgerService {
     ledgerId: number,
     itemId: number,
   ): Promise<string> {
-    // Ledger가 존재하고, 해당 Member ID와 연결되어 있는지 확인
-    const ledger = await this.ledgerRepository.findOne({
-      where: { id: ledgerId, memberId },
-    });
+    console.log(`Received memberId: ${memberId}, ledgerId: ${ledgerId}, itemId: ${itemId}`);
 
-    if (!ledger) {
-      throw new Error('Ledger not found or you do not have access.');
-    }
+    // Ledger가 존재하고, 해당 Member ID와 연결되어 있는지 확인
+    // const ledger = await this.ledgerRepository.findOne({
+    //   where: { id: ledgerId, memberId },
+    // });
+
+    // if (!ledger) {
+    //   console.error('Ledger not found or you do not have access.');
+    // }
 
     // 해당 Ledger와 연결된 Item이 존재하는지 확인
     const item = await this.itemRepository.findOne({
@@ -338,14 +340,28 @@ export class LedgerService {
     });
 
     if (!item) {
-      throw new Error('Item not found in the specified ledger.');
+      console.error('Item not found in the specified ledger.');
     }
 
     // Item 삭제
     await this.itemRepository.delete(itemId);
 
+    const ledger = await this.ledgerRepository.findOne({
+      where: { id: ledgerId },
+      relations: ['items'],
+    });
+    console.log("========================");
+    console.log(ledger);
+    console.log("========================");
+    if (!ledger.items || ledger.items.length === 0) {
+      // Ledger 삭제
+      await this.ledgerRepository.delete(ledgerId);
+      return `Item with id ${itemId} and its associated Ledger with id ${ledgerId} have been deleted.`;
+    }
+    console.log(`Item with id ${itemId} has been deleted.`);
     return `Item with id ${itemId} has been deleted.`;
   }
+
 
   async deleteLedger(memberId: number, ledgerId: number): Promise<string> {
     const ledger = await this.ledgerRepository.findOne({
