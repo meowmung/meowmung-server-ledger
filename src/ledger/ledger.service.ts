@@ -8,6 +8,7 @@ import axios from 'axios';
 import FormData from 'form-data';
 import { UpdateLedgerDto } from './dto/update-ledger.dto';
 import { UploadLedgerDto } from './dto/upload-ledger.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class LedgerService {
@@ -17,6 +18,7 @@ export class LedgerService {
     @InjectRepository(Item)
     private itemRepository: Repository<Item>,
     private readonly httpService: HttpService,
+    private configService: ConfigService,
   ) {}
 
   async findAll(
@@ -91,14 +93,12 @@ export class LedgerService {
     //     contentType: file.mimetype,
     //   });
     // });
-
+    const ledgerReceiptUrl =
+      this.configService.get<string>('LEDGER_RECEIPT_URL');
     try {
-      const response = await axios.post(
-        'http://192.168.1.97:8085/ledger_receipt',
-        {
-          image_data: uploadedUrls,
-        },
-      );
+      const response = await axios.post(ledgerReceiptUrl, {
+        image_data: uploadedUrls,
+      });
       return response.data;
     } catch (error) {
       return false;
@@ -368,7 +368,7 @@ export class LedgerService {
     return `Ledger with id ${ledgerId} and all related items have been deleted.`;
   }
 
-  validate(result){
+  validate(result) {
     if (
       result.total_amount == -1 &&
       result.items.length == 0 &&
