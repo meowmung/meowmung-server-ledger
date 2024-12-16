@@ -42,7 +42,6 @@ export class LedgerController {
     if (!result || this.ledgerService.validate(result)) {
       uploadedUrls.forEach((url) => {
         this.s3Service.deleteFile(url);
-        console.log(url);
       });
       return false;
     }
@@ -114,7 +113,6 @@ export class LedgerController {
     @Param('id') id: number,
     @Param('itemId') itemId: number,
   ) {
-    console.log(`memberId: ${memberId}, id: ${id}, itemId: ${itemId}`);
     return await this.ledgerService.deleteItem(memberId, id, itemId);
   }
 
